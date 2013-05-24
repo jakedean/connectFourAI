@@ -10,13 +10,14 @@ module.exports = (function () {
   			}
   		}
   		this.gameBoard = gameBoard;
-  		console.log(this.gameBoard)
+  		this.turn = 1;
   		return this;
   	},
 
   	'drawGameBoard' : function (ctx, myCanvas) {
   		//set fill
   		ctx.fillStyle = '#000000'
+  		ctx.lineWidth = 5;
       //draw outline
       ctx.strokeRect(0,0,myCanvas.width, myCanvas.height);
 

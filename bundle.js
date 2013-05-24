@@ -1,7 +1,7 @@
 ;(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0].call(u.exports,function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
 var player = require('./player'),
     board = require('./board'),
-    logic = require('./logic');
+    gameAI = require('./gameAI');
 
 
 window.addEventListener('load', eventWindowLoaded, false);
@@ -11,25 +11,32 @@ function eventWindowLoaded() {
 }
 
 function canvasApp() {
-	var myCanvas = document.getElementById('myCanvas');
-	var ctx = myCanvas.getContext('2d');
-	var myBoard = board();
-	var gameState = myBoard.createGameArray();
-	var myPlayer = player();
+
+	var myCanvas = document.getElementById('myCanvas'),
+	    ctx = myCanvas.getContext('2d'),
+	    myBoard = board(),
+	    gameState = myBoard.createGameArray(),
+	    myPlayer = player(),
+	    myAI = gameAI();
 
 	var update = function (ctx, myCanvas) {
   	myBoard.drawGameBoard(ctx, myCanvas);
   }
 
 	myCanvas.addEventListener('click', function (e) {
-		myPlayer.move(e, gameState);
-		update(ctx, myCanvas);
+		var result = myPlayer.move(e, gameState);
+		if (result === true) {
+      update(ctx, myCanvas);
+      myAI.availableMoves(gameState);
+		}
 	});
+
+
 
   update(ctx, myCanvas);
 
 }
-},{"./player":2,"./board":3,"./logic":4}],2:[function(require,module,exports){
+},{"./player":2,"./board":3,"./gameAI":4}],2:[function(require,module,exports){
 module.exports = (function () {
 
   var playerProto = {
@@ -58,13 +65,14 @@ module.exports = (function () {
       if (mousePos.x > myCanvas.offsetLeft + 25 &&
       	  mousePos.x < (myCanvas.offsetLeft) + (myCanvas.width + 25) &&
       	  mousePos.y > myCanvas.offsetTop + 25 &&
-      	  mousePos.y < (myCanvas.offsetTop) + (myCanvas.height - 25)) {
+      	  mousePos.y < (myCanvas.offsetTop) + (myCanvas.height - 25) &&
+      	  gameState.turn === 1) {
       	var columnIndex = Math.floor((mousePos.x - myCanvas.offsetLeft - 75)/100);
-        console.log((mousePos.x - myCanvas.offsetLeft - 75)/100);
       	for (var i = 5; i >= 0; i -= 1) {
       		if (gameState.gameBoard[i][columnIndex] === 0) {
       			gameState.gameBoard[i][columnIndex] = 1;
-      			return;
+      			gameState.turn = 2;
+      			return true;
       		}
       	}
       }
@@ -89,13 +97,14 @@ module.exports = (function () {
   			}
   		}
   		this.gameBoard = gameBoard;
-  		console.log(this.gameBoard)
+  		this.turn = 1;
   		return this;
   	},
 
   	'drawGameBoard' : function (ctx, myCanvas) {
   		//set fill
   		ctx.fillStyle = '#000000'
+  		ctx.lineWidth = 5;
       //draw outline
       ctx.strokeRect(0,0,myCanvas.width, myCanvas.height);
 
@@ -149,6 +158,62 @@ module.exports = (function () {
 }());
 
 },{}],4:[function(require,module,exports){
+module.exports = (function () {
 
+  var gameAI = {
+
+  	'availableMoves' : function (gameState) {
+      var board = gameState.gameBoard,
+          possibleMoves = {};
+
+      for (var col = 0; col < 7; col += 1) {
+      	for (var row = 5; row >= 0; row -= 1) {
+      		if (board[row][col] === 0) {
+      			console.log('row ' + row);
+      			console.log('column ' + col);
+      			possibleMoves[col] = row;
+      			break;
+      		}
+      	}
+      }
+      console.log(JSON.stringify(possibleMoves));
+      return;
+  	},
+
+  	'bestMove' : function (gameState) {
+      
+  	},
+
+  	'minimax' : function (gameState) {
+
+  	},
+
+  	'isLegalMove' : function (gameState) {
+      
+  	},
+
+  	'value' : function (gameState) {
+
+  	}, 
+
+    'checkVerical' : function (gameState) {
+      
+    },
+
+    'checkHorizontal' : function (gameState) {
+
+    },
+
+    'checkDiagonal' : function (gameState) {
+
+    }
+ 
+  }
+
+  return function () {
+  	return gameAI;
+  }
+
+}());
 },{}]},{},[1])
 ;
