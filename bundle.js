@@ -6,6 +6,30 @@ var player = require('./player'),
 
 window.addEventListener('load', eventWindowLoaded, false);
 
+if (!Array.prototype.extend) {
+    
+  Array.prototype.extend = function (object) {
+
+    for (key in object) {
+
+      if (typeof object[key] === 'object' 
+         && typeof this[key] === 'object'
+         && this.hasOwnProperty(key)) {
+
+        this[key].extend(object[key]);      
+      
+      } else {    
+        if (object[key] instanceof Array) {
+        	this[key] = object[key].slice(0);
+        } else {
+          this[key] = object[key];      
+        }
+      }
+    }    
+    return this;  
+  };
+};
+
 function eventWindowLoaded() {
 	canvasApp();
 }
@@ -27,7 +51,7 @@ function canvasApp() {
 		var result = myPlayer.move(e, gameState);
 		if (result === true) {
       update(ctx, myCanvas);
-      myAI.availableMoves(gameState);
+      myAI.minimax(gameState, 1);
 		}
 	});
 
@@ -162,38 +186,66 @@ module.exports = (function () {
 
   var gameAI = {
 
-  	'availableMoves' : function (gameState) {
-      var board = gameState.gameBoard,
-          possibleMoves = {};
+  	'availableMoves' : function (board) {
+      var possibleMoves = {};
 
       for (var col = 0; col < 7; col += 1) {
       	for (var row = 5; row >= 0; row -= 1) {
       		if (board[row][col] === 0) {
-      			console.log('row ' + row);
-      			console.log('column ' + col);
       			possibleMoves[col] = row;
       			break;
       		}
       	}
       }
-      console.log(JSON.stringify(possibleMoves));
-      return;
+      return possibleMoves;
   	},
 
   	'bestMove' : function (gameState) {
       
   	},
 
-  	'minimax' : function (gameState) {
+  	'minimax' : (function () {
+      var infin = Math.pow(2,53);
+      return function (gameState, depth) {
+        var branches,
+            newGameState;
+        if (this.winner(gameState.gameBoard)) {
+          return (infin);
+        } else if (depth === 0) {
+          return this.score(gameState.gameBoard);
+        }
+        var alpha = infin;
+        branches = this.availableMoves(gameState.gameBoard);
+        for (var col in branches) {
+          if (!branches.hasOwnProperty(col)) continue;
+          newGameState = [].extend(gameState.gameBoard);
+          newGameState = this.move(depth % 2, newGameState, branches[col], col);
+          console.log(JSON.stringify(newGameState))
+          alpha = Math.min(alpha, -this.minimax({ 'gameBoard' : newGameState }, depth - 1));
+        }
+        return alpha;
+      }
+  	}()),
 
-  	},
+    'move' : function (oddOrEven, board, row, col) {
+      if (oddOrEven === 0) {
+        board[row][col] = 1;
+      } else {
+        board[row][col] = 2;
+      }
+      return board;
+    },
 
   	'isLegalMove' : function (gameState) {
       
   	},
 
-  	'value' : function (gameState) {
+    'winner' : function (gameState) {
 
+    },
+
+  	'score' : function (gameState) {
+      return 5;
   	}, 
 
     'checkVerical' : function (gameState) {
