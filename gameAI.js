@@ -21,28 +21,44 @@ module.exports = (function () {
       return this.minimax(gameState, depth)
   	},
 
+    'moveApiPlayer' : function (gameState) {
+      gameState.gameBoard[gameState.bestMove[0]][gameState.bestMove[1]] = 2;
+      gameState.turn = 1;
+    },
+
   	'minimax' : (function () {
       var infin = Math.pow(2,53);
+
       return function (gameState, depth) {
+        
         var branches,
             newGameState;
+        
         if (this.winner(gameState.gameBoard)) {
           return (infin);
         } else if (depth === 0) {
           return this.score(gameState.gameBoard);
         }
+       
         var alpha = infin;
+       
         branches = this.availableMoves(gameState.gameBoard);
+  
         for (var col in branches) {
           if (!branches.hasOwnProperty(col)) continue;
           newGameState = [].extend(gameState.gameBoard);
           newGameState = this.move(depth, newGameState, branches[col], col);
-          console.log(JSON.stringify(newGameState))
+          console.log(JSON.stringify(newGameState));
           alpha = Math.min(alpha, -this.minimax({ 'gameBoard' : newGameState }, depth - 1));
-          console.log(alpha)
+          if (alpha !== gameState.storedAlpha) {
+            gameState.storedAlpha = alpha;
+            gameState.bestMove = [branches[col], col];
+          }
         }
-        return alpha;
+        gameState.bestMove[1] = parseInt(gameState.bestMove[1]);
+        this.moveApiPlayer(gameState);
       }
+
   	}()),
 
     'move' : function (currentDepth, board, row, col) {
@@ -67,6 +83,7 @@ module.exports = (function () {
       return (this.checkWinnerRow(board) ||
               this.checkWinnerCol(board) ||
               this.checkWinnerDiagonal(board));
+      console.log('there is a winner');
     },
 
   	'score' : function (board) {
@@ -92,14 +109,14 @@ module.exports = (function () {
 
     'scoreCol' : function (board) {
       var colScoreTable = this.scoreTable();
-      for (var row = 5; row <= 3; row -= 1) {
+      for (var row = 5; row >= 3; row -= 1) {
         for (var col = 0; col < 7; col += 1) {
           var counter = 0;
           if (board[row][col] !== 1 && 
               board[row - 1][col] !== 1 && 
               board[row - 2][col] !== 1 &&
               board[row - 3][col] !== 1) {
-            for (var j = row; j < row - 3; j -= 1) {
+            for (var j = row; j >= row - 3; j -= 1) {
               if (board[j][col] === 2) counter += 1;
             }
             if (counter) colScoreTable[counter] += 1;
@@ -118,7 +135,7 @@ module.exports = (function () {
               board[row][col+2]!== 1 && 
               board[row][col+1]!== 1 && 
               board[row][col] !== 1) {
-            for (var j = col; j < col + 3; j += 1) {
+            for (var j = col; j <= col + 3; j += 1) {
               if (board[row][j] === 2) counter += 1;
             }
             if (counter) rowScoreTable[counter] += 1;
@@ -131,12 +148,12 @@ module.exports = (function () {
     'scoreDiagonal' : function (board) {
       var diagScoreBoard = this.scoreTable(),
           counter = 0;
-      for (var row = 5; row >= 3; row -= 3){
+      for (var row = 5; row >= 3; row -= 1){
         for (var col = 0; col < 7; col += 1) {
           if (board[row][col] !== 1 && 
-              board[row - 1][col - 1] !== 1 && 
-              board[row - 2][col - 2] !== 1 && 
-              board[row - 3][col - 3] !== 1) {
+              board[row - 3][col - 3] !== 1 && typeof board[row - 3][col - 3] !== 'undefined' &&
+              board[row - 2][col - 2] !== 1 && typeof board[row - 2][col - 2] !== 'undefined'&&
+              board[row - 1][col - 1] !== 1 && typeof board[row - 1][col - 1] !== 'undefined') {
             counter = 0;
             if (board[row][col] === 2) counter += 1;
             if (board[row - 1][col - 1] === 2) counter += 1;
@@ -145,9 +162,9 @@ module.exports = (function () {
             if (counter) diagScoreBoard[counter] += 1;
           }
           if (board[row][col] !== 1 && 
-              board[row - 1][col + 1] !== 1 &&
-              board[row - 2][col + 2] !== 1 &&
-              board[row - 3][col + 3] !== 1) {
+              board[row - 3][col + 3] !== 1 && typeof board[row - 3][col + 3] !== 'undefined' &&
+              board[row - 2][col + 2] !== 1 && typeof board[row - 2][col + 2] !== 'undefined' &&
+              board[row - 1][col + 1] !== 1 && typeof board[row - 1][col + 1] !== 'undefined') {
             counter = 0;
             if (board[row][col] === 2) counter += 1;
             if (board[row - 1][col + 1] === 2) counter += 1;
@@ -175,17 +192,18 @@ module.exports = (function () {
           if (col >= 4 && counter === 0) {
             break;
           }
-          if (board[row][col]) {
+          if (board[row][col] && counter === 0) {
+            counter = 1;
+          }  else if (board[row][col] && (board[row][col] ===  board[row][col + 1])) {
             counter += 1;
-            if (board[row][col] ===  board[row][col - 1]) {
-              continue;
-            } else if (board[row][col] !==  board[row][col - 1]) {
-              counter = 1;
-            }
+            continue;
           } else {
             counter = 0;
           }
-          if (counter === 4) { return true }
+          if (counter === 4) {
+           console.log('it returned true');
+           return true 
+          };
         }
       }
     },

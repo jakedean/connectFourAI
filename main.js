@@ -41,6 +41,7 @@ function canvasApp() {
 	    gameState = myBoard.createGameArray(),
 	    myPlayer = player(),
 	    myAI = gameAI();
+	    gameState.storedAlpha = -(Math.pow(2,53));
 
 	var update = function (ctx, myCanvas) {
   	myBoard.drawGameBoard(ctx, myCanvas);
@@ -50,7 +51,8 @@ function canvasApp() {
 		var result = myPlayer.move(e, gameState);
 		if (result === true) {
       update(ctx, myCanvas);
-      console.log(myAI.bestMove(gameState, 1));
+      myAI.minimax(gameState, 1);
+      update(ctx, myCanvas);
 		}
 	});
 
