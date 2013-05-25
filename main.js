@@ -50,7 +50,7 @@ function canvasApp() {
 		var result = myPlayer.move(e, gameState);
 		if (result === true) {
       update(ctx, myCanvas);
-      myAI.minimax(gameState, 1);
+      console.log(myAI.bestMove(gameState, 1));
 		}
 	});
 
