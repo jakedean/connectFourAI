@@ -1,6 +1,18 @@
 module.exports = (function () {
 
-  var gameAI = {
+  var gameAIProto = {
+
+    'depth' : 4,
+
+    'computerIsEven' : true,
+
+    'getPlayerMove' : function (currentDepth) {
+      if (this.computerIsEven) {
+        return (currentDepth % 2 === 0) ? 2 : 1;
+      } else {
+        return (currentDepth % 2 === 0) ? 1 : 2;
+      }
+    },
 
   	'availableMoves' : function (board) {
       var possibleMoves = {};
@@ -21,9 +33,13 @@ module.exports = (function () {
       return this.minimax(gameState, depth)
   	},
 
-    'moveApiPlayer' : function (gameState) {
+    'moveApiPlayer' : function (gameState, depth) {
+      console.log(depth);
+      console.log('This is an api move');
+      console.log(String(gameState.bestMove));
       gameState.gameBoard[gameState.bestMove[0]][gameState.bestMove[1]] = 2;
       gameState.turn = 1;
+      console.log(JSON.stringify(gameState));
     },
 
   	'minimax' : (function () {
@@ -32,10 +48,18 @@ module.exports = (function () {
       return function (gameState, depth) {
         
         var branches,
-            newGameState;
+            newGameState,
+            depth;
+
+        if (depth === undefined) {
+          depth = this.depth;
+        } 
+
+        console.log('depth ' + depth);
         
         if (this.winner(gameState.gameBoard)) {
-          return (infin);
+          console.log('in here');
+          return infin;
         } else if (depth === 0) {
           return this.score(gameState.gameBoard);
         }
@@ -46,47 +70,117 @@ module.exports = (function () {
   
         for (var col in branches) {
           if (!branches.hasOwnProperty(col)) continue;
-          newGameState = [].extend(gameState.gameBoard);
-          newGameState = this.move(depth, newGameState, branches[col], col);
-          console.log(JSON.stringify(newGameState));
+          newGameState = [].arrayExtend(gameState.gameBoard);
+          newGameState = this.move(this.getPlayerMove(depth), newGameState, branches[col], col);
           alpha = Math.min(alpha, -this.minimax({ 'gameBoard' : newGameState }, depth - 1));
           if (alpha !== gameState.storedAlpha) {
             gameState.storedAlpha = alpha;
             gameState.bestMove = [branches[col], col];
           }
         }
-        gameState.bestMove[1] = parseInt(gameState.bestMove[1]);
-        this.moveApiPlayer(gameState);
+        if (gameState.storedAlpha) {
+          gameState.bestMove[1] = parseInt(gameState.bestMove[1]);
+          console.log(gameState.bestMove);
+          this.moveApiPlayer(gameState);
+        } 
       }
 
   	}()),
 
-    'move' : function (currentDepth, board, row, col) {
-      var maxDepth = board.depth;
-      if (maxDepth % 2 === 0) {
-        if (currentDepth % 2 === 0) {
-          board[row][col] = 2;
-        } else {
-          board[row][col] = 1;
+    'minimax2' : (function () {
+      var infin = Math.pow(2,53);
+      return function (gameState, depth) {
+        var branches,
+              newGameState,
+              currAlpha,
+              isAI,
+              depth;
+
+        if (depth === undefined) {
+          depth = this.depth;
         }
-      } else {
-        if (currentDepth % 2 === 0) {
-          board[row][col] = 1;
-        } else {
-          board[row][col] = 2;
+
+        isAI  = this.getPlayerMove(depth) === 2 ? 1 : 0;
+        
+        if (this.winner(gameState.gameBoard)) {
+          console.log('in here');
+          if (isAI) {
+            return infin;
+          } else {
+            return -(infin);
+          }
+          
+        } else if (depth === 0) {
+          return this.score(gameState.gameBoard);
         }
+       
+
+        var obj = {
+          'alpha' : undefined,
+          'move' : undefined,
+          'player' : this.getPlayerMove(depth)
+        }
+       
+        branches = this.availableMoves(gameState.gameBoard);
+
+        for (var col in branches) {
+          if (!branches.hasOwnProperty(col)) continue;
+          newGameState = [].arrayExtend(gameState.gameBoard);
+          newGameState = this.move(this.getPlayerMove(depth), newGameState, branches[col], col);
+          console.log(JSON.stringify(newGameState));
+          currAlpha = this.minimax2({ 'gameBoard' : newGameState }, depth - 1);
+          console.log('currAlpha ' + currAlpha);
+          if (isAI) {
+            if (currAlpha > obj.alpha || obj.alpha === undefined) {
+              console.log('IS AIIII IS 111111111111111');
+              console.log('old alpha ' + obj.alpha);
+              console.log('new alpha ' + currAlpha);
+              obj.alpha = currAlpha;
+              obj.move = [branches[col], col];
+            } 
+          } else {
+            if (currAlpha < obj.alpha || obj.alpha === undefined) {
+              console.log('IS AIIII IS 0000000000')
+              console.log('old alpha ' + obj.alpha);
+              console.log('new alpha ' + currAlpha);
+              obj.alpha = currAlpha;
+              obj.move = [branches[col], col];
+            } 
+          }
+        }
+        if (depth === this.depth) {
+          console.log('********************************')
+          obj.move[1] = parseInt(obj.move[1]);
+          gameState.bestMove = obj.move;
+          console.log(gameState.bestMove);
+          this.moveApiPlayer(gameState, depth);
+        } else {
+          console.log('alpha at the end  ' + obj.alpha);
+          return obj.alpha;
+        }
+
       }
+    }()),
+
+    'move' : function (player, board, row, col) {
+      board[row][col] = player;
       return board;
     },
 
     'winner' : function (board) {
-      return (this.checkWinnerRow(board) ||
-              this.checkWinnerCol(board) ||
-              this.checkWinnerDiagonal(board));
-      console.log('there is a winner');
+      if (this.checkWinnerRow(board) ||
+          this.checkWinnerCol(board) ||
+          this.checkWinnerDiagonal(board)) {
+        console.log('there is a winner');
+        return true;
+      }
     },
 
   	'score' : function (board) {
+      console.log('score');
+      console.log(this.scoreTotal(this.scoreRow(board)) + 
+               this.scoreTotal(this.scoreCol(board)) + 
+               this.scoreTotal(this.scoreDiagonal(board)));
       return   (this.scoreTotal(this.scoreRow(board)) + 
                this.scoreTotal(this.scoreCol(board)) + 
                this.scoreTotal(this.scoreDiagonal(board)));       
@@ -103,7 +197,6 @@ module.exports = (function () {
         if (!scoreTable.hasOwnProperty(count)) continue;
         total += scoreTable[count] * calculator[count];
       }
-      console.log('Total = ' + total)
       return total;
     },
 
@@ -152,7 +245,7 @@ module.exports = (function () {
         for (var col = 0; col < 7; col += 1) {
           if (board[row][col] !== 1 && 
               board[row - 3][col - 3] !== 1 && typeof board[row - 3][col - 3] !== 'undefined' &&
-              board[row - 2][col - 2] !== 1 && typeof board[row - 2][col - 2] !== 'undefined'&&
+              board[row - 2][col - 2] !== 1 && typeof board[row - 2][col - 2] !== 'undefined' &&
               board[row - 1][col - 1] !== 1 && typeof board[row - 1][col - 1] !== 'undefined') {
             counter = 0;
             if (board[row][col] === 2) counter += 1;
@@ -187,43 +280,24 @@ module.exports = (function () {
 
     'checkWinnerRow' : function (board) {
       for (var row = 5; row >= 0; row -= 1) {
-        var counter = 0;
-        for (var col = 0; col < 7; col += 1) {
-          if (col >= 4 && counter === 0) {
-            break;
-          }
-          if (board[row][col] && counter === 0) {
-            counter = 1;
-          }  else if (board[row][col] && (board[row][col] ===  board[row][col + 1])) {
-            counter += 1;
-            continue;
-          } else {
-            counter = 0;
-          }
-          if (counter === 4) {
-           console.log('it returned true');
-           return true 
-          };
+        var strRow = board[row].join();
+        if ((strRow.match(/1,1,1,1/)) || (strRow.match(/2,2,2,2/))) {
+          return true;
+        } else if (strRow.match(/0,0,0,0,0,0,0/)) {
+          return;
         }
       }
     },
 
     'checkWinnerCol' : function (board) {
       for (var col = 0; col < 7; col += 1) {
-        var counter = 0;
-        for (var row = 5; row >= 0; row -= 1) {
-          if (board[row][col]) {
-            counter += 1;
-            if (board[row][col] ===  board[row][col - 1]) {
-              continue;
-            } else if (board[row][col] !==  board[row][col - 1]) {
-              counter = 1;
-            }
-          } else {
-            counter = 0;
-            break;
-          }
-          if (counter === 4) { return true }
+        var colStrMaker = [];
+        for (var row = 5; row >=0; row -= 1) {
+          colStrMaker.push(board[row][col]);
+        }
+        var strCol = colStrMaker.join();
+        if ((strCol.match(/1,1,1,1/)) || (strCol.match(/2,2,2,2/))) {
+          return true;
         }
       }
     },
@@ -249,8 +323,17 @@ module.exports = (function () {
  
   }
 
-  return function () {
-  	return gameAI;
+  var init = function (that) {
+    if (that.depth % 2 === 0) {
+      that.computerIsEven = true;
+    } else {
+      that.computerIsEven = false;
+    }
+    return that;
+  }
+
+  return function (OO) {
+  	return init(Object.create(gameAIProto).extend(OO));
   }
 
 }());
