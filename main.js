@@ -17,23 +17,45 @@ function canvasApp() {
 	    myBoard = board(),
 	    gameState = myBoard.createGameArray(),
 	    myPlayer = player(),
-	    myAI = aiConstructor({ 'depth' : 2 });
-      gameState.storedAlpha = -(Math.pow(2,53));
+	    myAI = aiConstructor({ 'depth' : 4 });
 
 	var update = function (ctx, myCanvas) {
   	myBoard.drawGameBoard(ctx, myCanvas);
+  }
+
+  var winner = function (ctx, myCanvas) {
+  	ctx.fillStyle = '#000000';
+  	ctx.fillRect((myCanvas.width/2 - 300), (myCanvas.height/2 - 100), 600, 150);
+  	ctx.fillStyle = '#FF0000';
+  	ctx.font = '100px sans-serif';
+  	ctx.textAlign = 'center';
+  	ctx.fillText('Game Over', myCanvas.width/2, myCanvas.height/2);
+  	ctx.fillStyle = '#000000';
+  	ctx.fillRect((myCanvas.width/2 - 150), 2*(myCanvas.height/3), 300, 50);
+  	ctx.fillStyle = '#FF0000';
+  	ctx.font = '20px sans-serif';
+  	ctx.textAlign = 'center';
+  	ctx.fillText('Refresh To Play Again!', myCanvas.width/2, 2*(myCanvas.height/3) + 30);
   }
 
 	myCanvas.addEventListener('click', function (e) {
 		var result = myPlayer.move(e, gameState);
 		if (result === true) {
       update(ctx, myCanvas);
-      myAI.minimax2(gameState);
+      if (myAI.winner(gameState.gameBoard)) {
+      	winner(ctx, myCanvas);
+      	return;
+      }
+      gameState.storedAlpha = undefined;
+      myAI.botChecker(gameState);
+      myAI.moveApiPlayer(gameState);
       update(ctx, myCanvas);
+      if (myAI.winner(gameState.gameBoard)) {
+      	winner(ctx,myCanvas);
+      	return;
+      }
 		}
 	});
-
-
 
   update(ctx, myCanvas);
 

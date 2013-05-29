@@ -18,76 +18,50 @@ function canvasApp() {
 	    myBoard = board(),
 	    gameState = myBoard.createGameArray(),
 	    myPlayer = player(),
-	    myAI = aiConstructor({ 'depth' : 2 });
-      gameState.storedAlpha = -(Math.pow(2,53));
+	    myAI = aiConstructor({ 'depth' : 4 });
 
 	var update = function (ctx, myCanvas) {
   	myBoard.drawGameBoard(ctx, myCanvas);
+  }
+
+  var winner = function (ctx, myCanvas) {
+  	ctx.fillStyle = '#000000';
+  	ctx.fillRect((myCanvas.width/2 - 300), (myCanvas.height/2 - 100), 600, 150);
+  	ctx.fillStyle = '#FF0000';
+  	ctx.font = '100px sans-serif';
+  	ctx.textAlign = 'center';
+  	ctx.fillText('Game Over', myCanvas.width/2, myCanvas.height/2);
+  	ctx.fillStyle = '#000000';
+  	ctx.fillRect((myCanvas.width/2 - 150), 2*(myCanvas.height/3), 300, 50);
+  	ctx.fillStyle = '#FF0000';
+  	ctx.font = '20px sans-serif';
+  	ctx.textAlign = 'center';
+  	ctx.fillText('Refresh To Play Again!', myCanvas.width/2, 2*(myCanvas.height/3) + 30);
   }
 
 	myCanvas.addEventListener('click', function (e) {
 		var result = myPlayer.move(e, gameState);
 		if (result === true) {
       update(ctx, myCanvas);
-      myAI.minimax2(gameState);
+      if (myAI.winner(gameState.gameBoard)) {
+      	winner(ctx, myCanvas);
+      	return;
+      }
+      gameState.storedAlpha = undefined;
+      myAI.botChecker(gameState);
+      myAI.moveApiPlayer(gameState);
       update(ctx, myCanvas);
+      if (myAI.winner(gameState.gameBoard)) {
+      	winner(ctx,myCanvas);
+      	return;
+      }
 		}
 	});
-
-
 
   update(ctx, myCanvas);
 
 }
-},{"./extend":2,"./player":3,"./board":4,"./gameAI":5}],2:[function(require,module,exports){
-// All credit to Anthony Nardi
-// git@github.com:anthony-nardi/Extends.git
-
-if (!Object.prototype.extend) {
-
-  Object.prototype.extend = function (object) {
-
-    for (key in object) {
-
-      if (typeof object[key] === 'object' 
-         && typeof this[key] === 'object'
-         && this.hasOwnProperty(key)) {
-        
-        this[key].extend(object[key]);
-
-      } else {
-        this[key] = object[key];
-      }
-    }
-    return this;
-  };
-};
-
-
-if (!Array.prototype.arrayExtend) {
-    
-  Array.prototype.arrayExtend = function (object) {
-
-    for (key in object) {
-
-      if (typeof object[key] === 'object' 
-         && typeof this[key] === 'object'
-         && this.hasOwnProperty(key)) {
-
-        this[key].arrayExtend(object[key]);      
-      
-      } else {    
-        if (object[key] instanceof Array) {
-          this[key] = object[key].slice(0);
-        } else {
-          this[key] = object[key];      
-        }
-      }
-    }    
-    return this;  
-  };
-};
-},{}],3:[function(require,module,exports){
+},{"./extend":2,"./player":3,"./board":4,"./gameAI":5}],3:[function(require,module,exports){
 module.exports = (function () {
 
   var playerProto = {
@@ -135,6 +109,54 @@ module.exports = (function () {
   }
 
 }());
+},{}],2:[function(require,module,exports){
+// All credit to Anthony Nardi
+// git@github.com:anthony-nardi/Extends.git
+
+if (!Object.prototype.extend) {
+
+  Object.prototype.extend = function (object) {
+
+    for (key in object) {
+
+      if (typeof object[key] === 'object' 
+         && typeof this[key] === 'object'
+         && this.hasOwnProperty(key)) {
+        
+        this[key].extend(object[key]);
+
+      } else {
+        this[key] = object[key];
+      }
+    }
+    return this;
+  };
+};
+
+
+if (!Array.prototype.arrayExtend) {
+    
+  Array.prototype.arrayExtend = function (object) {
+
+    for (key in object) {
+
+      if (typeof object[key] === 'object' 
+         && typeof this[key] === 'object'
+         && this.hasOwnProperty(key)) {
+
+        this[key].arrayExtend(object[key]);      
+      
+      } else {    
+        if (object[key] instanceof Array) {
+          this[key] = object[key].slice(0);
+        } else {
+          this[key] = object[key];      
+        }
+      }
+    }    
+    return this;  
+  };
+};
 },{}],4:[function(require,module,exports){
 module.exports = (function () {
   var gameInitProto = {
@@ -244,13 +266,9 @@ module.exports = (function () {
       return this.minimax(gameState, depth)
   	},
 
-    'moveApiPlayer' : function (gameState, depth) {
-      console.log(depth);
-      console.log('This is an api move');
-      console.log(String(gameState.bestMove));
+    'moveApiPlayer' : function (gameState) {
       gameState.gameBoard[gameState.bestMove[0]][gameState.bestMove[1]] = 2;
       gameState.turn = 1;
-      console.log(JSON.stringify(gameState));
     },
 
   	'minimax' : (function () {
@@ -283,8 +301,15 @@ module.exports = (function () {
           if (!branches.hasOwnProperty(col)) continue;
           newGameState = [].arrayExtend(gameState.gameBoard);
           newGameState = this.move(this.getPlayerMove(depth), newGameState, branches[col], col);
-          alpha = Math.min(alpha, -this.minimax({ 'gameBoard' : newGameState }, depth - 1));
-          if (alpha !== gameState.storedAlpha) {
+          alpha = Math.min(alpha, -this.minimax({ 'gameBoard' : newGameState }, depth - 1)); 
+        }
+        console.log('This is the alpha');
+        console.log(alpha);
+        return alpha;
+      }
+  	}()),
+/*
+if (alpha !== gameState.storedAlpha) {
             gameState.storedAlpha = alpha;
             gameState.bestMove = [branches[col], col];
           }
@@ -294,9 +319,7 @@ module.exports = (function () {
           console.log(gameState.bestMove);
           this.moveApiPlayer(gameState);
         } 
-      }
-
-  	}()),
+*/
 
     'minimax2' : (function () {
       var infin = Math.pow(2,53);
@@ -305,31 +328,31 @@ module.exports = (function () {
               newGameState,
               currAlpha,
               isAI,
-              depth;
+              depth,
+              currPlayer;
 
         if (depth === undefined) {
           depth = this.depth;
         }
 
+        currPlayer = this.getPlayerMove(depth);
+
         isAI  = this.getPlayerMove(depth) === 2 ? 1 : 0;
         
         if (this.winner(gameState.gameBoard)) {
-          console.log('in here');
-          if (isAI) {
+          if (this.winner(gameState.gameBoard) === 2) {
             return infin;
           } else {
             return -(infin);
           }
-          
         } else if (depth === 0) {
           return this.score(gameState.gameBoard);
         }
-       
 
-        var obj = {
-          'alpha' : undefined,
-          'move' : undefined,
-          'player' : this.getPlayerMove(depth)
+        if (isAI) {
+          alpha = -(infin);
+        } else {
+          alpha = infin;
         }
        
         branches = this.availableMoves(gameState.gameBoard);
@@ -338,40 +361,27 @@ module.exports = (function () {
           if (!branches.hasOwnProperty(col)) continue;
           newGameState = [].arrayExtend(gameState.gameBoard);
           newGameState = this.move(this.getPlayerMove(depth), newGameState, branches[col], col);
-          console.log(JSON.stringify(newGameState));
-          currAlpha = this.minimax2({ 'gameBoard' : newGameState }, depth - 1);
-          console.log('currAlpha ' + currAlpha);
+          var o = {}.extend(gameState);
+          o.gameBoard = newGameState;
+          currAlpha = this.minimax2(o, depth - 1);
           if (isAI) {
-            if (currAlpha > obj.alpha || obj.alpha === undefined) {
-              console.log('IS AIIII IS 111111111111111');
-              console.log('old alpha ' + obj.alpha);
-              console.log('new alpha ' + currAlpha);
-              obj.alpha = currAlpha;
-              obj.move = [branches[col], col];
+            alpha = Math.max(currAlpha, alpha);
+            if (depth === this.depth) {
+              if (gameState.storedAlpha === undefined) {
+                gameState.storedAlpha = alpha;
+                gameState.bestMove = [branches[col], col];
+              } else if (gameState.storedAlpha < alpha) {
+                gameState.storedAlpha = alpha;
+                gameState.bestMove = [branches[col], col];
+              }
             } 
           } else {
-            if (currAlpha < obj.alpha || obj.alpha === undefined) {
-              console.log('IS AIIII IS 0000000000')
-              console.log('old alpha ' + obj.alpha);
-              console.log('new alpha ' + currAlpha);
-              obj.alpha = currAlpha;
-              obj.move = [branches[col], col];
+              alpha = Math.min(currAlpha, alpha);
             } 
           }
+          return alpha;
         }
-        if (depth === this.depth) {
-          console.log('********************************')
-          obj.move[1] = parseInt(obj.move[1]);
-          gameState.bestMove = obj.move;
-          console.log(gameState.bestMove);
-          this.moveApiPlayer(gameState, depth);
-        } else {
-          console.log('alpha at the end  ' + obj.alpha);
-          return obj.alpha;
-        }
-
-      }
-    }()),
+      }()),
 
     'move' : function (player, board, row, col) {
       board[row][col] = player;
@@ -379,19 +389,16 @@ module.exports = (function () {
     },
 
     'winner' : function (board) {
-      if (this.checkWinnerRow(board) ||
-          this.checkWinnerCol(board) ||
-          this.checkWinnerDiagonal(board)) {
-        console.log('there is a winner');
-        return true;
+      if (this.checkWinnerRow(board)) {
+        return this.checkWinnerRow(board);
+      } else if (this.checkWinnerCol(board)) {
+        return this.checkWinnerCol(board);
+      } else if (this.checkWinnerDiagonal(board)) {
+        return this.checkWinnerDiagonal(board);
       }
     },
 
   	'score' : function (board) {
-      console.log('score');
-      console.log(this.scoreTotal(this.scoreRow(board)) + 
-               this.scoreTotal(this.scoreCol(board)) + 
-               this.scoreTotal(this.scoreDiagonal(board)));
       return   (this.scoreTotal(this.scoreRow(board)) + 
                this.scoreTotal(this.scoreCol(board)) + 
                this.scoreTotal(this.scoreDiagonal(board)));       
@@ -432,7 +439,7 @@ module.exports = (function () {
 
     'scoreRow' : function (board) {
       var rowScoreTable = this.scoreTable();
-      for(var row = 5; row > 0; row -= 1) {
+      for(var row = 5; row >= 0; row -= 1) {
         for (var col = 0; col < 4; col += 1) {
           var counter = 0;
           if (board[row][col+3]!== 1 && 
@@ -492,12 +499,13 @@ module.exports = (function () {
     'checkWinnerRow' : function (board) {
       for (var row = 5; row >= 0; row -= 1) {
         var strRow = board[row].join();
-        if ((strRow.match(/1,1,1,1/)) || (strRow.match(/2,2,2,2/))) {
-          return true;
-        } else if (strRow.match(/0,0,0,0,0,0,0/)) {
-          return;
+        if (strRow.match(/1,1,1,1/)) {
+          return 1;
+        } else if (strRow.match(/2,2,2,2/)) {
+          return 2;
         }
       }
+      return false;
     },
 
     'checkWinnerCol' : function (board) {
@@ -507,31 +515,172 @@ module.exports = (function () {
           colStrMaker.push(board[row][col]);
         }
         var strCol = colStrMaker.join();
-        if ((strCol.match(/1,1,1,1/)) || (strCol.match(/2,2,2,2/))) {
-          return true;
+        if (strCol.match(/1,1,1,1/)) {
+          return 1;
+        } else if (strCol.match(/2,2,2,2/)) {
+          return 2;
         }
       }
+      return false;
     },
 
     'checkWinnerDiagonal' : function (board) {
       for (var row = 5; row > 2; row -= 1) {
-        var counter = 0;
         for (var col = 0; col < 7; col += 1) {
           if(board[row][col] && board[row][col] === board[row-3][col-3]) {
             if (board[row][col] === board[row-1][col-1] && 
                 board[row][col] === board[row-2][col-2]) {
-              return true;
+              if (board[row][col] === 1) {
+                return 1;
+              } else {
+                return 2;
+              };
             }
           } else if (board[row][col] && board[row][col] === board[row-3][col+3]){
             if (board[row][col] === board[row-1][col+1] && 
                 board[row][col] === board[row-2][col+2]) {
-              return true;
+              if (board[row][col] === 1) {
+                return 1;
+              } else {
+                return 2;
+              }
             }
           }
         }
-      }   
-    }
- 
+      }
+      return false;   
+    },
+
+    'rowTrip' : function (board) {
+      for (var row = 5; row >= 0; row -= 1) {
+        var strRow = board[row].join();
+        if (strRow.match(/0,2,2,2/) || strRow.match(/2,2,2,0/)) {
+          for (var col = 0; col <= 6; col += 1) {
+            if (board[row][col] === 0 && board[row][col+1] === 2 && board[row][col+2] === 2 && board[row][col+3] === 2) {
+              if (row === 5 || (board[row+1] && board[row+1][col])) {
+                return {'winRowRow' : row,
+                        'winRowCol' : col 
+                       };
+              }
+            } else if (board[row][col+3] === 0 && board[row][col] === 2 && board[row][col+1] === 2 && board[row][col+2] === 2) {
+              if (row === 5 || (board[row+1] && board[row+1][col+3])) {
+                return {'winRowRow' : row,
+                      'winRowCol' : col+3 
+                     };
+              }
+            }
+          }
+          
+        } else if (strRow.match(/0,1,1,1/) || strRow.match(/1,1,1,0/)) {
+          for (var col = 0; col <= 6; col += 1) {
+            if (board[row][col] === 0 && board[row][col+1] === 1 && board[row][col+2] === 1 && board[row][col+3] === 1) {
+              if (row === 5 || (board[row+1] && board[row+1][col])) {
+                return {'blockRowRow' : row,
+                      'blockRowCol' : col 
+                     };
+              }
+            } else if (board[row][col+3] === 0 && board[row][col] === 1 && board[row][col+1] === 1 && board[row][col+2] === 1) {
+              if (row === 5 || (board[row+1] && board[row+1][col+3])) {
+                return {'blockRowRow' : row,
+                      'blockRowCol' : col+3 
+                     };
+              }
+            }
+          }
+        }
+      }
+      return false;
+    },
+
+    'colTrip' : function (board) {
+      for (var col = 0; col < 7; col += 1) {
+        var colStrMaker = [];
+        for (var row = 5; row >=0; row -= 1) {
+          colStrMaker.push(board[row][col]);
+        }
+        var strCol = colStrMaker.join();
+        if (strCol.match(/2,2,2,0/)) {
+          for (var r = 5; r >= 0; r -= 1) {
+            if (board[r-3] && board[r-3][col] === 0 && 
+                board[r][col] === 2 && 
+                board[r-2][col] === 2 && 
+                board[r-2][col] === 2) {
+              return {'winColRow' : r-3,
+                      'winColCol' : col 
+                     };
+            }
+          }
+        } else if (strCol.match(/1,1,1,0/)) {
+          for (var r = 5; r >= 0; r -= 1) {
+            if (board[r-3] && board[r-3][col] === 0 && 
+                board[r][col] === 1 && 
+                board[r-2][col] === 1 && 
+                board[r-2][col] === 1) {
+              return {'blockColRow' : r-3,
+                      'blockColCol' : col 
+                     };
+            }
+          }
+        }
+      }
+      return false;
+    },
+
+    'threeScore' : function (board) {
+      var row = this.rowTrip(board);
+      var col = this.colTrip(board);
+      console.log('got in three score function');
+      console.log('row ' + JSON.stringify(row));
+      console.log('col ' + JSON.stringify(col));
+      if (row && row.winRowRow !== undefined) {
+          board[row.winRowRow][row.winRowCol] = 2;
+          return board;
+        } else if (col && col.winColRow !== undefined) {
+          board[col.winColRow][col.winColCol] = 2;
+          return board;
+        } else if (row && row.blockRowRow !== undefined) {
+          board[row.blockRowRow][row.blockRowCol] = 2;
+          return board;
+        } else if (col && col.blockColRow !== undefined) {
+          board[col.blockColRow][col.blockColCol] = 2;
+          return board;
+        } else {
+          return false;
+        }
+    },
+
+    'botChecker' : function (gameState) {
+      var board = gameState.gameBoard;
+      var rowStr = board[5].join();
+      if (rowStr.match(/0,1,1,0/)) {
+        for (var i = 0; i <= 6; i += 1) {
+          if (board[5][i] === 0 && board[5][i+1] === 1 && board[5][i+2] === 1) {
+            board[5][i] = 2;
+            return gameState;
+          }
+        }
+
+      } else if (rowStr.match(/0,1,0,1,0/)) {
+        for (var i = 0; i <= 6; i += 1) {
+          if (board[5][i] === 0 && board[5][i+1] === 1 && board[5][i+2] === 0 && board[5][i+3] === 1) {
+            board[5][i+2] = 2;
+            return gameState;
+          }
+        }
+      } else if (rowStr.match(/1,1,0,1/)) {
+        for (var i = 0; i <= 6; i += 1) {
+          if (board[5][i] === 1 && board[5][i+1] === 1 && board[5][i+2] === 0 && board[5][i+3] === 1) {
+            board[5][i+2] = 2;
+            return gameState;
+          }
+        }
+      }
+      if (this.threeScore(board)) {
+        return gameState;
+      } else {
+        this.minimax2(gameState);
+      }
+    }   
   }
 
   var init = function (that) {
