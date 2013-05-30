@@ -44,7 +44,7 @@ function canvasApp() {
 		if (result === true) {
       update(ctx, myCanvas);
       if (myAI.winner(gameState.gameBoard)) {
-      	winner(ctx, myCanvas);
+      	setTimeout(function () { winner(ctx, myCanvas) }, 2000);
       	return;
       }
       gameState.storedAlpha = undefined;
@@ -52,7 +52,7 @@ function canvasApp() {
       myAI.moveApiPlayer(gameState);
       update(ctx, myCanvas);
       if (myAI.winner(gameState.gameBoard)) {
-      	winner(ctx,myCanvas);
+      	setTimeout(function () { winner(ctx, myCanvas) }, 2000);
       	return;
       }
 		}
@@ -61,55 +61,7 @@ function canvasApp() {
   update(ctx, myCanvas);
 
 }
-},{"./extend":2,"./player":3,"./board":4,"./gameAI":5}],3:[function(require,module,exports){
-module.exports = (function () {
-
-  var playerProto = {
-
-  	'locateMousePos' : function (e) {
-  		var myCanvas = document.getElementById('myCanvas');
-      return {
-      	'x' : Math.floor(
-      		  e.clientX
-      		  + document.body.scrollLeft
-      		  + document.documentElement.scrollLeft
-      		  - myCanvas.offsetLeft
-      		  ),
-      	'y' : Math.floor(
-      		  e.clientY
-      		  + document.body.scrollTop
-      		  + document.documentElement.scrollTop
-      		  - myCanvas.offsetTop
-      		  )
-      };
-  	},
-
-  	'move' : function (e, gameState) {
-  		var myCanvas = document.getElementById('myCanvas');
-  		var mousePos = this.locateMousePos(e);
-      if (mousePos.x > myCanvas.offsetLeft + 25 &&
-      	  mousePos.x < (myCanvas.offsetLeft) + (myCanvas.width + 25) &&
-      	  mousePos.y > myCanvas.offsetTop + 25 &&
-      	  mousePos.y < (myCanvas.offsetTop) + (myCanvas.height - 25) &&
-      	  gameState.turn === 1) {
-      	var columnIndex = Math.floor((mousePos.x - myCanvas.offsetLeft - 75)/100);
-      	for (var i = 5; i >= 0; i -= 1) {
-      		if (gameState.gameBoard[i][columnIndex] === 0) {
-      			gameState.gameBoard[i][columnIndex] = 1;
-      			gameState.turn = 2;
-      			return true;
-      		}
-      	}
-      }
-  	}
-  }
-
-  return function () {
-  	return Object.create(playerProto);
-  }
-
-}());
-},{}],2:[function(require,module,exports){
+},{"./extend":2,"./player":3,"./board":4,"./gameAI":5}],2:[function(require,module,exports){
 // All credit to Anthony Nardi
 // git@github.com:anthony-nardi/Extends.git
 
@@ -157,6 +109,54 @@ if (!Array.prototype.arrayExtend) {
     return this;  
   };
 };
+},{}],3:[function(require,module,exports){
+module.exports = (function () {
+
+  var playerProto = {
+
+  	'locateMousePos' : function (e) {
+  		var myCanvas = document.getElementById('myCanvas');
+      return {
+      	'x' : Math.floor(
+      		  e.clientX
+      		  + document.body.scrollLeft
+      		  + document.documentElement.scrollLeft
+      		  - myCanvas.offsetLeft
+      		  ),
+      	'y' : Math.floor(
+      		  e.clientY
+      		  + document.body.scrollTop
+      		  + document.documentElement.scrollTop
+      		  - myCanvas.offsetTop
+      		  )
+      };
+  	},
+
+  	'move' : function (e, gameState) {
+  		var myCanvas = document.getElementById('myCanvas');
+  		var mousePos = this.locateMousePos(e);
+      if (mousePos.x > myCanvas.offsetLeft + 25 &&
+      	  mousePos.x < (myCanvas.offsetLeft) + (myCanvas.width + 25) &&
+      	  mousePos.y > myCanvas.offsetTop + 25 &&
+      	  mousePos.y < (myCanvas.offsetTop) + (myCanvas.height - 25) &&
+      	  gameState.turn === 1) {
+      	var columnIndex = Math.floor((mousePos.x - myCanvas.offsetLeft - 75)/100);
+      	for (var i = 5; i >= 0; i -= 1) {
+      		if (gameState.gameBoard[i][columnIndex] === 0) {
+      			gameState.gameBoard[i][columnIndex] = 1;
+      			gameState.turn = 2;
+      			return true;
+      		}
+      	}
+      }
+  	}
+  }
+
+  return function () {
+  	return Object.create(playerProto);
+  }
+
+}());
 },{}],4:[function(require,module,exports){
 module.exports = (function () {
   var gameInitProto = {
@@ -553,37 +553,29 @@ if (alpha !== gameState.storedAlpha) {
 
     'rowTrip' : function (board) {
       for (var row = 5; row >= 0; row -= 1) {
-        var strRow = board[row].join();
-        if (strRow.match(/0,2,2,2/) || strRow.match(/2,2,2,0/)) {
-          for (var col = 0; col <= 6; col += 1) {
-            if (board[row][col] === 0 && board[row][col+1] === 2 && board[row][col+2] === 2 && board[row][col+3] === 2) {
-              if (row === 5 || (board[row+1] && board[row+1][col])) {
-                return {'winRowRow' : row,
-                        'winRowCol' : col 
-                       };
-              }
-            } else if (board[row][col+3] === 0 && board[row][col] === 2 && board[row][col+1] === 2 && board[row][col+2] === 2) {
-              if (row === 5 || (board[row+1] && board[row+1][col+3])) {
-                return {'winRowRow' : row,
-                      'winRowCol' : col+3 
-                     };
-              }
-            }
+        for (var col = 0; col <= 4; col += 1) {
+          var counter = 0;
+          var strRow = board[row].join();
+          if (strRow.match(/0,0,0,0,0,0,0/)) {
+            return false;
           }
-          
-        } else if (strRow.match(/0,1,1,1/) || strRow.match(/1,1,1,0/)) {
-          for (var col = 0; col <= 6; col += 1) {
-            if (board[row][col] === 0 && board[row][col+1] === 1 && board[row][col+2] === 1 && board[row][col+3] === 1) {
-              if (row === 5 || (board[row+1] && board[row+1][col])) {
-                return {'blockRowRow' : row,
-                      'blockRowCol' : col 
-                     };
+          for (var i = 0; i < 4; i += 1) {
+            counter += this.numReturner(board[row][col+i])
+          }
+          if (counter === 3) {
+           for (var k = 0; k < 4; k += 1) {
+             if (board[row][col+k] === 0 && (row === 5 || (board[row+1] && board[row+1][col+k]))) {
+               return {'blockRowRow' : row,
+                      'blockRowCol' : col+k 
+                     }; 
               }
-            } else if (board[row][col+3] === 0 && board[row][col] === 1 && board[row][col+1] === 1 && board[row][col+2] === 1) {
-              if (row === 5 || (board[row+1] && board[row+1][col+3])) {
-                return {'blockRowRow' : row,
-                      'blockRowCol' : col+3 
-                     };
+            } 
+          } else if (counter === 15) {
+            for (var x = 0; x < 4; x += 1) {
+             if (board[row][col+x] === 0 && (row === 5 || (board[row+1] && board[row+1][col+x]))) {
+               return {'winRowRow' : row,
+                      'winRowCol' : col+x 
+                     }; 
               }
             }
           }
@@ -591,6 +583,64 @@ if (alpha !== gameState.storedAlpha) {
       }
       return false;
     },
+
+    'diagTrip' : function (board) {
+      for (var row = 5; row > 2; row -= 1) {
+        for (var col = 0; col < 7; col += 1) {
+          var counter1 = 0;
+          var counter2 = 0;
+          for (var i = 0; i < 4; i += 1) {
+            counter1 += this.numReturner(board[row-i][col-i]);
+            counter2 += this.numReturner(board[row-i][col+i]);
+          }
+          if (counter1 === 3) {
+            for (var k = 0; k < 4; k += 1) {
+             if (board[row-k][col-k] === 0 && (row-k === 5 || (board[(row-k)+1] && board[(row-k)+1][col-k]))) {
+               return {'blockDiagRow' : row-k,
+                      'blockDiagCol' : col-k 
+                     }; 
+              }
+            } 
+          } else if (counter1 === 15) {
+            for (var x = 0; x < 4; x += 1) {
+             if (board[row-x][col-x] === 0 && (row-x === 5 || (board[(row-x)+1] && board[(row-x)+1][col-x]))) {
+               return {'winDiagRow' : row-x,
+                      'winDiagCol' : col-x 
+                     }; 
+              }
+            }
+          } else if (counter2 === 3) {
+            for (var y = 0; y < 4; y += 1) {
+             if (board[row-y][col+y] === 0 && (row-y === 5 || (board[(row-y)+1] && board[(row-y)+1][col+y]))) {
+               return {'blockDiagRow' : row-y,
+                      'blockDiagCol' : col+y
+                     }; 
+              }
+            } 
+          } else if (counter2 === 15) {
+            for (var z = 0; z < 4; z += 1) {
+             if (board[row-z][col+z] === 0 && (row-z === 5 || (board[(row-z)+1] && board[(row-z)+1][col+z]))) {
+              console.log(board[(row-z)+1][col+z]);
+               return {'winDiagRow' : row-z,
+                      'winDiagCol' : col+z 
+                     }; 
+              }
+            }
+          }
+        }
+      }
+      return false; 
+    },
+
+    'numReturner' : function (score) {
+      if (score === 0) {
+        return 0;
+      } else if (score === 1) {
+        return 1;
+      } else if (score === 2) {
+        return 5;
+      }
+    }, 
 
     'colTrip' : function (board) {
       for (var col = 0; col < 7; col += 1) {
@@ -629,20 +679,28 @@ if (alpha !== gameState.storedAlpha) {
     'threeScore' : function (board) {
       var row = this.rowTrip(board);
       var col = this.colTrip(board);
+      var diag = this.diagTrip(board);
       console.log('got in three score function');
       console.log('row ' + JSON.stringify(row));
       console.log('col ' + JSON.stringify(col));
+      console.log('diag ' + JSON.stringify(diag));
       if (row && row.winRowRow !== undefined) {
           board[row.winRowRow][row.winRowCol] = 2;
           return board;
         } else if (col && col.winColRow !== undefined) {
           board[col.winColRow][col.winColCol] = 2;
           return board;
+        } else if (diag && diag.winDiagRow !== undefined) {
+          board[diag.winDiagRow][diag.winDiagCol] = 2;
+          return board;
         } else if (row && row.blockRowRow !== undefined) {
           board[row.blockRowRow][row.blockRowCol] = 2;
           return board;
         } else if (col && col.blockColRow !== undefined) {
           board[col.blockColRow][col.blockColCol] = 2;
+          return board;
+        } else if (diag && diag.blockDiagRow !== undefined) {
+          board[diag.blockDiagRow][diag.blockDiagCol] = 2;
           return board;
         } else {
           return false;
@@ -652,14 +710,13 @@ if (alpha !== gameState.storedAlpha) {
     'botChecker' : function (gameState) {
       var board = gameState.gameBoard;
       var rowStr = board[5].join();
-      if (rowStr.match(/0,1,1,0/)) {
+      if (rowStr.match(/1,1,0,1/)) {
         for (var i = 0; i <= 6; i += 1) {
-          if (board[5][i] === 0 && board[5][i+1] === 1 && board[5][i+2] === 1) {
-            board[5][i] = 2;
+          if (board[5][i] === 1 && board[5][i+1] === 1 && board[5][i+2] === 0 && board[5][i+3] === 1) {
+            board[5][i+2] = 2;
             return gameState;
           }
         }
-
       } else if (rowStr.match(/0,1,0,1,0/)) {
         for (var i = 0; i <= 6; i += 1) {
           if (board[5][i] === 0 && board[5][i+1] === 1 && board[5][i+2] === 0 && board[5][i+3] === 1) {
@@ -667,14 +724,15 @@ if (alpha !== gameState.storedAlpha) {
             return gameState;
           }
         }
-      } else if (rowStr.match(/1,1,0,1/)) {
+
+      } else if (rowStr.match(/0,1,1,0/)) {
         for (var i = 0; i <= 6; i += 1) {
-          if (board[5][i] === 1 && board[5][i+1] === 1 && board[5][i+2] === 0 && board[5][i+3] === 1) {
-            board[5][i+2] = 2;
+          if (board[5][i] === 0 && board[5][i+1] === 1 && board[5][i+2] === 1) {
+            board[5][i] = 2;
             return gameState;
           }
         }
-      }
+      } 
       if (this.threeScore(board)) {
         return gameState;
       } else {

@@ -43,7 +43,7 @@ function canvasApp() {
 		if (result === true) {
       update(ctx, myCanvas);
       if (myAI.winner(gameState.gameBoard)) {
-      	winner(ctx, myCanvas);
+      	setTimeout(function () { winner(ctx, myCanvas) }, 2000);
       	return;
       }
       gameState.storedAlpha = undefined;
@@ -51,7 +51,7 @@ function canvasApp() {
       myAI.moveApiPlayer(gameState);
       update(ctx, myCanvas);
       if (myAI.winner(gameState.gameBoard)) {
-      	winner(ctx,myCanvas);
+      	setTimeout(function () { winner(ctx, myCanvas) }, 2000);
       	return;
       }
 		}

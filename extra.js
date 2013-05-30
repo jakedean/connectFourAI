@@ -50,3 +50,51 @@
       }
       return false;
     },
+
+
+
+
+
+
+    /*
+    'r' : function (board) {
+      for (var row = 5; row >= 0; row -= 1) {
+        var strRow = board[row].join();
+        if (strRow.match(/0,2,2,2/) || strRow.match(/2,2,2,0/)) {
+          for (var col = 0; col <= 6; col += 1) {
+            if (board[row][col] === 0 && board[row][col+1] === 2 && board[row][col+2] === 2 && board[row][col+3] === 2) {
+              if (row === 5 || (board[row+1] && board[row+1][col])) {
+                return {'winRowRow' : row,
+                        'winRowCol' : col 
+                       };
+              }
+            } else if (board[row][col+3] === 0 && board[row][col] === 2 && board[row][col+1] === 2 && board[row][col+2] === 2) {
+              if (row === 5 || (board[row+1] && board[row+1][col+3])) {
+                return {'winRowRow' : row,
+                      'winRowCol' : col+3 
+                     };
+              }
+            }
+          }
+          
+        } else if (strRow.match(/0,1,1,1/) || strRow.match(/1,1,1,0/)) {
+          for (var col = 0; col <= 6; col += 1) {
+            if (board[row][col] === 0 && board[row][col+1] === 1 && board[row][col+2] === 1 && board[row][col+3] === 1) {
+              if (row === 5 || (board[row+1] && board[row+1][col])) {
+                return {'blockRowRow' : row,
+                      'blockRowCol' : col 
+                     };
+              }
+            } else if (board[row][col+3] === 0 && board[row][col] === 1 && board[row][col+1] === 1 && board[row][col+2] === 1) {
+              if (row === 5 || (board[row+1] && board[row+1][col+3])) {
+                return {'blockRowRow' : row,
+                      'blockRowCol' : col+3 
+                     };
+              }
+            }
+          }
+        }
+      }
+      return false;
+    },
+*/
