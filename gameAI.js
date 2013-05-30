@@ -38,56 +38,6 @@ module.exports = (function () {
       gameState.turn = 1;
     },
 
-  	'minimax' : (function () {
-      var infin = Math.pow(2,53);
-
-      return function (gameState, depth) {
-        
-        var branches,
-            newGameState,
-            depth;
-
-        if (depth === undefined) {
-          depth = this.depth;
-        } 
-
-        console.log('depth ' + depth);
-        
-        if (this.winner(gameState.gameBoard)) {
-          console.log('in here');
-          return infin;
-        } else if (depth === 0) {
-          return this.score(gameState.gameBoard);
-        }
-       
-        var alpha = infin;
-       
-        branches = this.availableMoves(gameState.gameBoard);
-  
-        for (var col in branches) {
-          if (!branches.hasOwnProperty(col)) continue;
-          newGameState = [].arrayExtend(gameState.gameBoard);
-          newGameState = this.move(this.getPlayerMove(depth), newGameState, branches[col], col);
-          alpha = Math.min(alpha, -this.minimax({ 'gameBoard' : newGameState }, depth - 1)); 
-        }
-        console.log('This is the alpha');
-        console.log(alpha);
-        return alpha;
-      }
-  	}()),
-/*
-if (alpha !== gameState.storedAlpha) {
-            gameState.storedAlpha = alpha;
-            gameState.bestMove = [branches[col], col];
-          }
-        }
-        if (gameState.storedAlpha) {
-          gameState.bestMove[1] = parseInt(gameState.bestMove[1]);
-          console.log(gameState.bestMove);
-          this.moveApiPlayer(gameState);
-        } 
-*/
-
     'minimax2' : (function () {
       var infin = Math.pow(2,53);
       return function (gameState, depth) {
@@ -387,7 +337,6 @@ if (alpha !== gameState.storedAlpha) {
           } else if (counter2 === 15) {
             for (var z = 0; z < 4; z += 1) {
              if (board[row-z][col+z] === 0 && (row-z === 5 || (board[(row-z)+1] && board[(row-z)+1][col+z]))) {
-              console.log(board[(row-z)+1][col+z]);
                return {'winDiagRow' : row-z,
                       'winDiagCol' : col+z 
                      }; 
@@ -447,10 +396,6 @@ if (alpha !== gameState.storedAlpha) {
       var row = this.rowTrip(board);
       var col = this.colTrip(board);
       var diag = this.diagTrip(board);
-      console.log('got in three score function');
-      console.log('row ' + JSON.stringify(row));
-      console.log('col ' + JSON.stringify(col));
-      console.log('diag ' + JSON.stringify(diag));
       if (row && row.winRowRow !== undefined) {
           board[row.winRowRow][row.winRowCol] = 2;
           return board;

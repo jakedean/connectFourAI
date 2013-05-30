@@ -620,7 +620,6 @@ if (alpha !== gameState.storedAlpha) {
           } else if (counter2 === 15) {
             for (var z = 0; z < 4; z += 1) {
              if (board[row-z][col+z] === 0 && (row-z === 5 || (board[(row-z)+1] && board[(row-z)+1][col+z]))) {
-              console.log(board[(row-z)+1][col+z]);
                return {'winDiagRow' : row-z,
                       'winDiagCol' : col+z 
                      }; 
@@ -680,10 +679,6 @@ if (alpha !== gameState.storedAlpha) {
       var row = this.rowTrip(board);
       var col = this.colTrip(board);
       var diag = this.diagTrip(board);
-      console.log('got in three score function');
-      console.log('row ' + JSON.stringify(row));
-      console.log('col ' + JSON.stringify(col));
-      console.log('diag ' + JSON.stringify(diag));
       if (row && row.winRowRow !== undefined) {
           board[row.winRowRow][row.winRowCol] = 2;
           return board;

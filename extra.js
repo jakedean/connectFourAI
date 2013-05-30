@@ -51,7 +51,43 @@
       return false;
     },
 
+'minimax' : (function () {
+      var infin = Math.pow(2,53);
 
+      return function (gameState, depth) {
+        
+        var branches,
+            newGameState,
+            depth;
+
+        if (depth === undefined) {
+          depth = this.depth;
+        } 
+
+        console.log('depth ' + depth);
+        
+        if (this.winner(gameState.gameBoard)) {
+          console.log('in here');
+          return infin;
+        } else if (depth === 0) {
+          return this.score(gameState.gameBoard);
+        }
+       
+        var alpha = infin;
+       
+        branches = this.availableMoves(gameState.gameBoard);
+  
+        for (var col in branches) {
+          if (!branches.hasOwnProperty(col)) continue;
+          newGameState = [].arrayExtend(gameState.gameBoard);
+          newGameState = this.move(this.getPlayerMove(depth), newGameState, branches[col], col);
+          alpha = Math.min(alpha, -this.minimax({ 'gameBoard' : newGameState }, depth - 1)); 
+        }
+        console.log('This is the alpha');
+        console.log(alpha);
+        return alpha;
+      }
+    }()),
 
 
 
@@ -98,3 +134,44 @@
       return false;
     },
 */
+
+
+
+
+    'minimax' : (function () {
+      var infin = Math.pow(2,53);
+
+      return function (gameState, depth) {
+        
+        var branches,
+            newGameState,
+            depth;
+
+        if (depth === undefined) {
+          depth = this.depth;
+        } 
+
+        console.log('depth ' + depth);
+        
+        if (this.winner(gameState.gameBoard)) {
+          console.log('in here');
+          return infin;
+        } else if (depth === 0) {
+          return this.score(gameState.gameBoard);
+        }
+       
+        var alpha = infin;
+       
+        branches = this.availableMoves(gameState.gameBoard);
+  
+        for (var col in branches) {
+          if (!branches.hasOwnProperty(col)) continue;
+          newGameState = [].arrayExtend(gameState.gameBoard);
+          newGameState = this.move(this.getPlayerMove(depth), newGameState, branches[col], col);
+          alpha = Math.min(alpha, -this.minimax({ 'gameBoard' : newGameState }, depth - 1)); 
+        }
+        console.log('This is the alpha');
+        console.log(alpha);
+        return alpha;
+      }
+    }()),
